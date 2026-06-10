@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 @Injectable()
@@ -8,20 +8,28 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
+    const databaseUrl = process.env.DATABASE_URL;
+
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL is not defined');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const adapter = new PrismaPg({
-      connectionString: process.env.DATABASE_URL!,
+      connectionString: databaseUrl,
     });
 
     super({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       adapter,
     });
   }
 
-  async onModuleInit() {
+  async onModuleInit(): Promise<void> {
     await this.$connect();
   }
 
-  async onModuleDestroy() {
+  async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
   }
 }
