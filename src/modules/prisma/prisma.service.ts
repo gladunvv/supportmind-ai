@@ -14,13 +14,11 @@ export class PrismaService
       throw new Error('DATABASE_URL is not defined');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const adapter = new PrismaPg({
       connectionString: databaseUrl,
     });
 
     super({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       adapter,
     });
   }
