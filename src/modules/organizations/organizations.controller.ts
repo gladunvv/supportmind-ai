@@ -21,6 +21,9 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { OrganizationMemberGuard } from './guards/organization-member.guard';
 import { OrganizationsService } from './organizations.service';
+import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { Permission } from '../auth/types/permission.type';
 
 @ApiTags('Organizations')
 @ApiBearerAuth()
@@ -55,7 +58,8 @@ export class OrganizationsController {
   }
 
   @Patch(':organizationId')
-  @UseGuards(OrganizationMemberGuard)
+  @UseGuards(OrganizationMemberGuard, PermissionsGuard)
+  @RequirePermissions(Permission.ManageOrganization)
   @ApiOkResponse({
     description: 'Update organization.',
   })
@@ -67,7 +71,8 @@ export class OrganizationsController {
   }
 
   @Delete(':organizationId')
-  @UseGuards(OrganizationMemberGuard)
+  @UseGuards(OrganizationMemberGuard, PermissionsGuard)
+  @RequirePermissions(Permission.ManageOrganization)
   @ApiOkResponse({
     description: 'Archive organization.',
   })
