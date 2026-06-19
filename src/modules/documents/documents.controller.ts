@@ -21,12 +21,13 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
-import { AuthUser } from '../auth/types/auth-user.type';
+import { type AuthUser } from '../auth/types/auth-user.type';
 import { Permission } from '../auth/types/permission.type';
 import { CurrentOrganization } from '../organizations/decorators/current-organization.decorator';
 import { OrganizationMemberGuard } from '../organizations/guards/organization-member.guard';
-import { RequestOrganization } from '../organizations/types/request-with-organization.type';
+import { type RequestOrganization } from '../organizations/types/request-with-organization.type';
 import { DocumentsService } from './documents.service';
+import { type UploadedDocumentFile } from './types/uploaded-file.type';
 
 @ApiTags('Documents')
 @ApiBearerAuth()
@@ -58,7 +59,7 @@ export class DocumentsController {
   upload(
     @CurrentOrganization() organization: RequestOrganization,
     @CurrentUser() user: AuthUser,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFile() file?: UploadedDocumentFile,
   ) {
     return this.documentsService.upload(organization.id, user.id, file);
   }

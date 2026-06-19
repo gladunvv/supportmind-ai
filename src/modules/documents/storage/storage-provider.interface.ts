@@ -1,10 +1,12 @@
+import { UploadedDocumentFile } from '../types/uploaded-file.type';
+
 export type StoredFile = {
   key: string;
   path: string;
 };
 
 export interface StorageProvider {
-  upload(file: Express.Multer.File): Promise<StoredFile>;
+  upload(file: UploadedDocumentFile): Promise<StoredFile>;
   delete(key: string): Promise<void>;
 }
 

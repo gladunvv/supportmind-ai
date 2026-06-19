@@ -8,8 +8,9 @@ import { DocumentStatus } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   STORAGE_PROVIDER,
-  StorageProvider,
+  type StorageProvider,
 } from './storage/storage-provider.interface';
+import { UploadedDocumentFile } from './types/uploaded-file.type';
 
 const ALLOWED_MIME_TYPES = new Set([
   'text/plain',
@@ -28,7 +29,7 @@ export class DocumentsService {
   async upload(
     organizationId: string,
     uploadedById: string,
-    file: Express.Multer.File | undefined,
+    file: UploadedDocumentFile | undefined,
   ) {
     if (!file) {
       throw new BadRequestException('File is required');
@@ -127,7 +128,7 @@ export class DocumentsService {
     return { success: true };
   }
 
-  private validateFile(file: Express.Multer.File): void {
+  private validateFile(file: UploadedDocumentFile): void {
     if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
       throw new BadRequestException(
         'Unsupported file type. Allowed types: .txt, .md, .pdf',

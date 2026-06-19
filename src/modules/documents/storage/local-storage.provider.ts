@@ -3,12 +3,13 @@ import { randomUUID } from 'crypto';
 import { mkdir, rm, writeFile } from 'fs/promises';
 import { extname, join } from 'path';
 import { StorageProvider, StoredFile } from './storage-provider.interface';
+import { UploadedDocumentFile } from '../types/uploaded-file.type';
 
 @Injectable()
 export class LocalStorageProvider implements StorageProvider {
   private readonly uploadDir = process.env.UPLOAD_DIR ?? 'storage/uploads';
 
-  async upload(file: Express.Multer.File): Promise<StoredFile> {
+  async upload(file: UploadedDocumentFile): Promise<StoredFile> {
     await mkdir(this.uploadDir, { recursive: true });
 
     const extension = extname(file.originalname);
