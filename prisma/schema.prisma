@@ -24,6 +24,8 @@ model User {
   refreshTokenHash String?
 
   memberships      Membership[]
+  
+  uploadedDocuments Document[] @relation("DocumentUploader")
 
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
@@ -38,6 +40,8 @@ model Organization {
   description String?
 
   memberships Membership[]
+
+  documents Document[]
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -63,4 +67,38 @@ model Membership {
   @@index([organizationId])
   @@index([userId])
   @@map("memberships")
+}
+
+enum DocumentStatus {
+  uploaded
+  processing
+  indexed
+  failed
+  deleted
+}
+
+model Document {
+  id             String         @id @default(cuid())
+
+  organizationId String
+  uploadedById   String
+
+  title          String
+  originalName   String
+  mimeType       String
+  sizeBytes      Int
+  storageKey     String
+  status         DocumentStatus @default(uploaded)
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  uploadedBy     User           @relation("DocumentUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
+  @@index([organizationId])
+  @@index([uploadedById])
+  @@index([status])
+  @@map("documents")
 }
