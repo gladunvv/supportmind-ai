@@ -92,6 +92,7 @@ model Document {
 
   organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   uploadedBy     User           @relation("DocumentUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  chunks         DocumentChunk[]
 
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
@@ -101,4 +102,24 @@ model Document {
   @@index([uploadedById])
   @@index([status])
   @@map("documents")
+}
+
+model DocumentChunk {
+  id             String   @id @default(cuid())
+
+  organizationId String
+  documentId     String
+
+  content        String
+  chunkIndex     Int
+  tokenCount     Int?
+
+  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+
+  @@unique([documentId, chunkIndex])
+  @@index([organizationId])
+  @@index([documentId])
+  @@map("document_chunks")
 }

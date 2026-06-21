@@ -5,9 +5,10 @@ import { DocumentsController } from './documents.controller';
 import { DocumentsService } from './documents.service';
 import { LocalStorageProvider } from './storage/local-storage.provider';
 import { STORAGE_PROVIDER } from './storage/storage-provider.interface';
+import { DocumentIngestionModule } from '../document-ingestion/document-ingestion.module';
 
 @Module({
-  imports: [AuthModule, OrganizationsModule],
+  imports: [AuthModule, OrganizationsModule, DocumentIngestionModule],
   controllers: [DocumentsController],
   providers: [
     DocumentsService,

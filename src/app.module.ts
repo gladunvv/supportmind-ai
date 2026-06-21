@@ -7,11 +7,19 @@ import { UsersModule } from './modules/users/users.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { MembersModule } from './modules/members/members.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { BullModule } from '@nestjs/bullmq';
+import { DocumentIngestionModule } from './modules/document-ingestion/document-ingestion.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST ?? 'localhost',
+        port: Number(process.env.REDIS_PORT ?? 6379),
+      },
     }),
     PrismaModule,
     HealthModule,
@@ -20,6 +28,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
     OrganizationsModule,
     MembersModule,
     DocumentsModule,
+    DocumentIngestionModule,
   ],
 })
 export class AppModule {}
