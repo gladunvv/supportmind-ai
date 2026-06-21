@@ -11,6 +11,8 @@ import {
   type StorageProvider,
 } from './storage/storage-provider.interface';
 import { UploadedDocumentFile } from './types/uploaded-file.type';
+import { DocumentIngestionService } from '../document-ingestion/services/document-ingestion.service';
+import type { Prisma } from '../../generated/prisma/client';
 
 const ALLOWED_MIME_TYPES = new Set([
   'text/plain',
@@ -18,12 +20,33 @@ const ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
 ]);
 
+const DOCUMENT_SELECT = {
+  id: true,
+  organizationId: true,
+  title: true,
+  originalName: true,
+  mimeType: true,
+  sizeBytes: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+  uploadedBy: {
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+    },
+  },
+} satisfies Prisma.DocumentSelect;
+
 @Injectable()
 export class DocumentsService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(STORAGE_PROVIDER)
     private readonly storageProvider: StorageProvider,
+    private readonly documentIngestionService: DocumentIngestionService,
   ) {}
 
   async upload(
@@ -39,7 +62,7 @@ export class DocumentsService {
 
     const storedFile = await this.storageProvider.upload(file);
 
-    return this.prisma.document.create({
+    const document = await this.prisma.document.create({
       data: {
         organizationId,
         uploadedById,
@@ -50,8 +73,15 @@ export class DocumentsService {
         storageKey: storedFile.key,
         status: DocumentStatus.uploaded,
       },
-      select: this.documentSelect(),
+      select: DOCUMENT_SELECT,
     });
+
+    await this.documentIngestionService.enqueueDocumentProcessing({
+      documentId: document.id,
+      organizationId: document.organizationId,
+    });
+
+    return document;
   }
 
   async findAll(organizationId: string) {
