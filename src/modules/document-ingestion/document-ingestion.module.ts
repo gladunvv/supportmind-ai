@@ -5,9 +5,11 @@ import { DocumentIngestionProcessor } from './processors/document-ingestion.proc
 import { DocumentIngestionService } from './services/document-ingestion.service';
 import { TextChunkerService } from './services/text-chunker.service';
 import { TextExtractorService } from './services/text-extractor.service';
+import { EmbeddingsModule } from '../embeddings/embeddings.module';
 
 @Module({
   imports: [
+    EmbeddingsModule,
     BullModule.registerQueue({
       name: DOCUMENT_INGESTION_QUEUE,
     }),

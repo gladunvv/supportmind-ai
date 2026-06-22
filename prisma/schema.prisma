@@ -113,6 +113,7 @@ model DocumentChunk {
   content        String
   chunkIndex     Int
   tokenCount     Int?
+  embedding      Unsupported("vector(1536)")?
 
   document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
