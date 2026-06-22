@@ -1,5 +1,5 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { DocumentStatus } from '../../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -10,6 +10,13 @@ import {
 import { TextChunkerService } from '../services/text-chunker.service';
 import { TextExtractorService } from '../services/text-extractor.service';
 import { ProcessDocumentJobData } from '../types/document-ingestion-job.type';
+import {
+  EMBEDDING_PROVIDER,
+  EmbeddingProvider,
+} from '../../embeddings/providers/embedding-provider.interface';
+import { toPgVector } from '../../embeddings/utils/vector-sql.util';
+
+import { createId } from '@paralleldrive/cuid2';
 
 @Processor(DOCUMENT_INGESTION_QUEUE)
 @Injectable()
@@ -20,6 +27,8 @@ export class DocumentIngestionProcessor extends WorkerHost {
     private readonly prisma: PrismaService,
     private readonly textExtractor: TextExtractorService,
     private readonly textChunker: TextChunkerService,
+    @Inject(EMBEDDING_PROVIDER)
+    private readonly embeddingProvider: EmbeddingProvider,
   ) {
     super();
   }
@@ -69,7 +78,9 @@ export class DocumentIngestionProcessor extends WorkerHost {
       );
 
       const chunks = this.textChunker.split(text);
-
+      const embeddings = await this.embeddingProvider.embedMany(
+        chunks.map((chunk) => chunk.content),
+      );
       await this.prisma.$transaction(async (tx) => {
         await tx.documentChunk.deleteMany({
           where: {
@@ -77,16 +88,31 @@ export class DocumentIngestionProcessor extends WorkerHost {
           },
         });
 
-        if (chunks.length > 0) {
-          await tx.documentChunk.createMany({
-            data: chunks.map((chunk) => ({
-              organizationId: document.organizationId,
-              documentId: document.id,
-              content: chunk.content,
-              chunkIndex: chunk.chunkIndex,
-              tokenCount: chunk.tokenCount,
-            })),
-          });
+        for (const [index, chunk] of chunks.entries()) {
+          const embedding = embeddings[index];
+
+          await tx.$executeRaw`
+            INSERT INTO "document_chunks" (
+              "id",
+              "organizationId",
+              "documentId",
+              "content",
+              "chunkIndex",
+              "tokenCount",
+              "embedding",
+              "createdAt"
+            )
+            VALUES (
+              ${createId()},
+              ${document.organizationId},
+              ${document.id},
+              ${chunk.content},
+              ${chunk.chunkIndex},
+              ${chunk.tokenCount},
+              ${toPgVector(embedding)}::vector,
+              NOW()
+            )
+          `;
         }
 
         await tx.document.update({
