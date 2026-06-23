@@ -8,12 +8,12 @@ const EMBEDDING_DIMENSION = 1536;
 
 @Injectable()
 export class MockEmbeddingProvider implements EmbeddingProvider {
-  async embed(text: string): Promise<number[]> {
-    return this.createVector(text);
+  embed(text: string): Promise<number[]> {
+    return Promise.resolve(this.createVector(text));
   }
 
-  async embedMany(texts: string[]): Promise<number[][]> {
-    return Promise.all(texts.map((text) => this.embed(text)));
+  embedMany(texts: string[]): Promise<number[][]> {
+    return Promise.resolve(texts.map((text) => this.createVector(text)));
   }
 
   private createVector(text: string): number[] {

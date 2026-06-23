@@ -9,7 +9,7 @@ import { MembersModule } from './modules/members/members.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { BullModule } from '@nestjs/bullmq';
 import { DocumentIngestionModule } from './modules/document-ingestion/document-ingestion.module';
-
+import { SearchModule } from './modules/search/search.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -29,6 +29,7 @@ import { DocumentIngestionModule } from './modules/document-ingestion/document-i
     MembersModule,
     DocumentsModule,
     DocumentIngestionModule,
+    SearchModule,
   ],
 })
 export class AppModule {}
