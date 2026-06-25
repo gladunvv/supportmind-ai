@@ -1,0 +1,62 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { AiQuestionStatus } from '../../generated/prisma/enums';
+import { AuthUser } from '../auth/types/auth-user.type';
+import { PrismaService } from '../prisma/prisma.service';
+import { SearchService } from '../search/search.service';
+import { AskAiDto } from './dto/ask-ai.dto';
+import { AI_PROVIDER, AiProvider } from './providers/ai-provider.interface';
+import { AiAnswer } from './types/ai-answer.type';
+import { AiSource } from './types/ai-source.type';
+
+@Injectable()
+export class AiService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly searchService: SearchService,
+    @Inject(AI_PROVIDER)
+    private readonly aiProvider: AiProvider,
+  ) {}
+
+  async ask(
+    organizationId: string,
+    user: AuthUser,
+    dto: AskAiDto,
+  ): Promise<AiAnswer> {
+    const searchResults = await this.searchService.search(organizationId, {
+      query: dto.question,
+    });
+
+    const sources: AiSource[] = searchResults.map((result) => ({
+      chunkId: result.chunkId,
+      documentId: result.documentId,
+      documentTitle: result.documentTitle,
+      content: result.content,
+      score: result.score,
+    }));
+
+    const aiResult = await this.aiProvider.generateAnswer({
+      question: dto.question,
+      sources,
+    });
+
+    await this.prisma.aiQuestion.create({
+      data: {
+        organizationId,
+        askedById: user.id,
+        question: dto.question,
+        answer: aiResult.answer,
+        needsReview: aiResult.needsHumanReview,
+        status: aiResult.needsHumanReview
+          ? AiQuestionStatus.needs_review
+          : AiQuestionStatus.answered,
+        sources,
+      },
+    });
+
+    return {
+      answer: aiResult.answer,
+      sources,
+      needsHumanReview: aiResult.needsHumanReview,
+    };
+  }
+}
