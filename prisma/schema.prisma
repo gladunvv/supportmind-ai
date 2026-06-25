@@ -24,6 +24,8 @@ model User {
   refreshTokenHash String?
 
   memberships      Membership[]
+
+  aiQuestions AiQuestion[] @relation("AiQuestions")
   
   uploadedDocuments Document[] @relation("DocumentUploader")
 
@@ -42,6 +44,8 @@ model Organization {
   memberships Membership[]
 
   documents Document[]
+
+  aiQuestions AiQuestion[]
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -123,4 +127,35 @@ model DocumentChunk {
   @@index([organizationId])
   @@index([documentId])
   @@map("document_chunks")
+}
+
+enum AiQuestionStatus {
+  answered
+  needs_review
+  failed
+}
+
+model AiQuestion {
+  id             String           @id @default(cuid())
+
+  organizationId String
+  askedById      String
+
+  question       String
+  answer         String?
+  status         AiQuestionStatus @default(answered)
+  needsReview    Boolean          @default(false)
+
+  sources        Json?
+
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  askedBy        User             @relation("AiQuestions", fields: [askedById], references: [id], onDelete: Restrict)
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([organizationId])
+  @@index([askedById])
+  @@index([status])
+  @@map("ai_questions")
 }

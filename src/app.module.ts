@@ -10,6 +10,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
 import { BullModule } from '@nestjs/bullmq';
 import { DocumentIngestionModule } from './modules/document-ingestion/document-ingestion.module';
 import { SearchModule } from './modules/search/search.module';
+import { AiModule } from './modules/ai/ai.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -30,6 +31,7 @@ import { SearchModule } from './modules/search/search.module';
     DocumentsModule,
     DocumentIngestionModule,
     SearchModule,
+    AiModule,
   ],
 })
 export class AppModule {}
