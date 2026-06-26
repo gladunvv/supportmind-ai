@@ -29,6 +29,8 @@ model User {
   
   uploadedDocuments Document[] @relation("DocumentUploader")
 
+  supportDrafts SupportDraft[] @relation("SupportDrafts")
+
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
@@ -46,6 +48,8 @@ model Organization {
   documents Document[]
 
   aiQuestions AiQuestion[]
+
+  supportDrafts SupportDraft[]
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -158,4 +162,37 @@ model AiQuestion {
   @@index([askedById])
   @@index([status])
   @@map("ai_questions")
+}
+
+enum SupportTone {
+  neutral
+  friendly
+  professional
+  concise
+}
+
+model SupportDraft {
+  id              String      @id @default(cuid())
+
+  organizationId  String
+  createdById     String
+
+  customerMessage String
+  reply           String
+  tone            SupportTone @default(neutral)
+
+  sources         Json?
+  riskFlags       String[]
+  needsReview     Boolean     @default(false)
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy       User         @relation("SupportDrafts", fields: [createdById], references: [id], onDelete: Restrict)
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([createdById])
+  @@index([needsReview])
+  @@map("support_drafts")
 }

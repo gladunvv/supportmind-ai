@@ -11,6 +11,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { DocumentIngestionModule } from './modules/document-ingestion/document-ingestion.module';
 import { SearchModule } from './modules/search/search.module';
 import { AiModule } from './modules/ai/ai.module';
+import { SupportModule } from './modules/support/support.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,6 +33,7 @@ import { AiModule } from './modules/ai/ai.module';
     DocumentIngestionModule,
     SearchModule,
     AiModule,
+    SupportModule,
   ],
 })
 export class AppModule {}
