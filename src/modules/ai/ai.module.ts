@@ -17,5 +17,6 @@ import { MockAiProvider } from './providers/mock-ai.provider';
       useClass: MockAiProvider,
     },
   ],
+  exports: [AI_PROVIDER],
 })
 export class AiModule {}
