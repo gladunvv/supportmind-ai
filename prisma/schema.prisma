@@ -31,6 +31,8 @@ model User {
 
   supportDrafts SupportDraft[] @relation("SupportDrafts")
 
+  usageEvents UsageEvent[] @relation("UsageEvents")
+
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
@@ -50,6 +52,8 @@ model Organization {
   aiQuestions AiQuestion[]
 
   supportDrafts SupportDraft[]
+
+  usageEvents UsageEvent[]
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -195,4 +199,35 @@ model SupportDraft {
   @@index([createdById])
   @@index([needsReview])
   @@map("support_drafts")
+}
+
+enum UsageEventType {
+  document_uploaded
+  document_indexed
+  embedding_generated
+  ai_question_asked
+  support_reply_generated
+}
+
+model UsageEvent {
+  id             String         @id @default(cuid())
+
+  organizationId String
+  userId         String?
+
+  type           UsageEventType
+
+  quantity       Int            @default(1)
+  metadata       Json?
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User?          @relation("UsageEvents", fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime       @default(now())
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("usage_events")
 }
