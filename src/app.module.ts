@@ -12,6 +12,8 @@ import { DocumentIngestionModule } from './modules/document-ingestion/document-i
 import { SearchModule } from './modules/search/search.module';
 import { AiModule } from './modules/ai/ai.module';
 import { SupportModule } from './modules/support/support.module';
+import { UsageModule } from './modules/usage/usage.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -34,6 +36,7 @@ import { SupportModule } from './modules/support/support.module';
     SearchModule,
     AiModule,
     SupportModule,
+    UsageModule,
   ],
 })
 export class AppModule {}

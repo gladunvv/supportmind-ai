@@ -7,6 +7,8 @@ import { AskAiDto } from './dto/ask-ai.dto';
 import { AI_PROVIDER, AiProvider } from './providers/ai-provider.interface';
 import { AiAnswer } from './types/ai-answer.type';
 import { AiSource } from './types/ai-source.type';
+import { UsageEventType } from '../../generated/prisma/enums';
+import { UsageService } from '../usage/usage.service';
 
 @Injectable()
 export class AiService {
@@ -15,6 +17,7 @@ export class AiService {
     private readonly searchService: SearchService,
     @Inject(AI_PROVIDER)
     private readonly aiProvider: AiProvider,
+    private readonly usageService: UsageService,
   ) {}
 
   async ask(
@@ -50,6 +53,17 @@ export class AiService {
           ? AiQuestionStatus.needs_review
           : AiQuestionStatus.answered,
         sources,
+      },
+    });
+
+    await this.usageService.track({
+      organizationId,
+      userId: user.id,
+      type: UsageEventType.ai_question_asked,
+      metadata: {
+        questionLength: dto.question.length,
+        sourcesCount: sources.length,
+        needsHumanReview: aiResult.needsHumanReview,
       },
     });
 

@@ -13,6 +13,8 @@ import {
 import { UploadedDocumentFile } from './types/uploaded-file.type';
 import { DocumentIngestionService } from '../document-ingestion/services/document-ingestion.service';
 import type { Prisma } from '../../generated/prisma/client';
+import { UsageEventType } from '../../generated/prisma/enums';
+import { UsageService } from '../usage/usage.service';
 
 const ALLOWED_MIME_TYPES = new Set([
   'text/plain',
@@ -47,6 +49,7 @@ export class DocumentsService {
     @Inject(STORAGE_PROVIDER)
     private readonly storageProvider: StorageProvider,
     private readonly documentIngestionService: DocumentIngestionService,
+    private readonly usageService: UsageService,
   ) {}
 
   async upload(
@@ -79,6 +82,13 @@ export class DocumentsService {
     await this.documentIngestionService.enqueueDocumentProcessing({
       documentId: document.id,
       organizationId: document.organizationId,
+    });
+
+    await this.usageService.track({
+      organizationId: document.organizationId,
+      userId: uploadedById,
+      type: UsageEventType.document_uploaded,
+      quantity: 1,
     });
 
     return document;

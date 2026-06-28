@@ -6,6 +6,7 @@ import { DocumentIngestionService } from './services/document-ingestion.service'
 import { TextChunkerService } from './services/text-chunker.service';
 import { TextExtractorService } from './services/text-extractor.service';
 import { EmbeddingsModule } from '../embeddings/embeddings.module';
+import { UsageModule } from '../usage/usage.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { EmbeddingsModule } from '../embeddings/embeddings.module';
     BullModule.registerQueue({
       name: DOCUMENT_INGESTION_QUEUE,
     }),
+    UsageModule,
   ],
   providers: [
     DocumentIngestionService,
