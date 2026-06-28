@@ -7,6 +7,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SearchService } from '../search/search.service';
 import { DraftSupportReplyDto } from './dto/draft-support-reply.dto';
 import { SupportDraftResponse } from './types/support-draft-response.type';
+import { UsageEventType } from '../../generated/prisma/enums';
+import { UsageService } from '../usage/usage.service';
 
 @Injectable()
 export class SupportService {
@@ -15,6 +17,7 @@ export class SupportService {
     private readonly searchService: SearchService,
     @Inject(AI_PROVIDER)
     private readonly aiProvider: AiProvider,
+    private readonly usageService: UsageService,
   ) {}
 
   async draftReply(
@@ -62,6 +65,19 @@ export class SupportService {
         riskFlags: true,
         needsReview: true,
         createdAt: true,
+      },
+    });
+
+    await this.usageService.track({
+      organizationId,
+      userId: user.id,
+      type: UsageEventType.support_reply_generated,
+      metadata: {
+        supportDraftId: supportDraft.id,
+        messageLength: dto.customerMessage.length,
+        sourcesCount: sources.length,
+        riskFlags: aiResult.riskFlags,
+        needsHumanReview: aiResult.needsHumanReview,
       },
     });
 

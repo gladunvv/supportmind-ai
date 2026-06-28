@@ -15,6 +15,8 @@ import {
   EmbeddingProvider,
 } from '../../embeddings/providers/embedding-provider.interface';
 import { toPgVector } from '../../embeddings/utils/vector-sql.util';
+import { UsageEventType } from '../../../generated/prisma/enums';
+import { UsageService } from '../../usage/usage.service';
 
 import { createId } from '@paralleldrive/cuid2';
 
@@ -29,6 +31,7 @@ export class DocumentIngestionProcessor extends WorkerHost {
     private readonly textChunker: TextChunkerService,
     @Inject(EMBEDDING_PROVIDER)
     private readonly embeddingProvider: EmbeddingProvider,
+    private readonly usageService: UsageService,
   ) {
     super();
   }
@@ -121,6 +124,24 @@ export class DocumentIngestionProcessor extends WorkerHost {
           },
           data: {
             status: DocumentStatus.indexed,
+          },
+        });
+        await this.usageService.track({
+          organizationId: document.organizationId,
+          type: UsageEventType.document_indexed,
+          metadata: {
+            documentId: document.id,
+            chunksCount: chunks.length,
+          },
+        });
+
+        await this.usageService.track({
+          organizationId: document.organizationId,
+          type: UsageEventType.embedding_generated,
+          quantity: chunks.length,
+          metadata: {
+            documentId: document.id,
+            chunksCount: chunks.length,
           },
         });
       });
