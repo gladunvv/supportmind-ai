@@ -33,6 +33,8 @@ model User {
 
   usageEvents UsageEvent[] @relation("UsageEvents")
 
+  auditLogs AuditLog[] @relation("AuditLogs")
+
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
@@ -54,6 +56,8 @@ model Organization {
   supportDrafts SupportDraft[]
 
   usageEvents UsageEvent[]
+
+  auditLogs AuditLog[]
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -230,4 +234,47 @@ model UsageEvent {
   @@index([type])
   @@index([createdAt])
   @@map("usage_events")
+}
+
+enum AuditLogAction {
+  organization_created
+  organization_updated
+  organization_archived
+
+  member_added
+  member_role_updated
+  member_removed
+
+  document_uploaded
+  document_deleted
+  document_indexed
+  document_failed
+
+  ai_question_asked
+  support_draft_generated
+}
+
+model AuditLog {
+  id             String         @id @default(cuid())
+
+  organizationId String
+  actorUserId    String?
+
+  action         AuditLogAction
+  entityType     String
+  entityId       String?
+
+  metadata       Json?
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actorUser      User?          @relation("AuditLogs", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime       @default(now())
+
+  @@index([organizationId])
+  @@index([actorUserId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
