@@ -7,6 +7,7 @@ import { LocalStorageProvider } from './storage/local-storage.provider';
 import { STORAGE_PROVIDER } from './storage/storage-provider.interface';
 import { DocumentIngestionModule } from '../document-ingestion/document-ingestion.module';
 import { UsageModule } from '../usage/usage.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { UsageModule } from '../usage/usage.module';
     OrganizationsModule,
     DocumentIngestionModule,
     UsageModule,
+    AuditModule,
   ],
   controllers: [DocumentsController],
   providers: [

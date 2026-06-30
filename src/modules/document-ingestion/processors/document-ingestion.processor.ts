@@ -1,7 +1,10 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { DocumentStatus } from '../../../generated/prisma/enums';
+import {
+  AuditLogAction,
+  DocumentStatus,
+} from '../../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   DOCUMENT_INGESTION_JOB,
@@ -19,6 +22,7 @@ import { UsageEventType } from '../../../generated/prisma/enums';
 import { UsageService } from '../../usage/usage.service';
 
 import { createId } from '@paralleldrive/cuid2';
+import { AuditService } from 'src/modules/audit/audit.service';
 
 @Processor(DOCUMENT_INGESTION_QUEUE)
 @Injectable()
@@ -32,6 +36,7 @@ export class DocumentIngestionProcessor extends WorkerHost {
     @Inject(EMBEDDING_PROVIDER)
     private readonly embeddingProvider: EmbeddingProvider,
     private readonly usageService: UsageService,
+    private readonly auditService: AuditService,
   ) {
     super();
   }
@@ -135,12 +140,12 @@ export class DocumentIngestionProcessor extends WorkerHost {
           },
         });
 
-        await this.usageService.track({
+        await this.auditService.log({
           organizationId: document.organizationId,
-          type: UsageEventType.embedding_generated,
-          quantity: chunks.length,
+          action: AuditLogAction.document_indexed,
+          entityType: 'document',
+          entityId: document.id,
           metadata: {
-            documentId: document.id,
             chunksCount: chunks.length,
           },
         });
@@ -157,6 +162,16 @@ export class DocumentIngestionProcessor extends WorkerHost {
         },
         data: {
           status: DocumentStatus.failed,
+        },
+      });
+
+      await this.auditService.log({
+        organizationId,
+        action: AuditLogAction.document_failed,
+        entityType: 'document',
+        entityId: documentId,
+        metadata: {
+          error: error instanceof Error ? error.message : 'Unknown error',
         },
       });
 

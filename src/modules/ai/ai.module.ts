@@ -7,9 +7,16 @@ import { AiService } from './ai.service';
 import { AI_PROVIDER } from './providers/ai-provider.interface';
 import { MockAiProvider } from './providers/mock-ai.provider';
 import { UsageModule } from '../usage/usage.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
-  imports: [AuthModule, OrganizationsModule, SearchModule, UsageModule],
+  imports: [
+    AuthModule,
+    OrganizationsModule,
+    SearchModule,
+    UsageModule,
+    AuditModule,
+  ],
   controllers: [AiController],
   providers: [
     AiService,
