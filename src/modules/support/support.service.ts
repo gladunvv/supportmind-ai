@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { SupportTone } from '../../generated/prisma/enums';
+import { AuditLogAction, SupportTone } from '../../generated/prisma/enums';
 import { AI_PROVIDER, AiProvider } from '../ai/providers/ai-provider.interface';
 import { AiSource } from '../ai/types/ai-source.type';
 import { AuthUser } from '../auth/types/auth-user.type';
@@ -9,6 +9,7 @@ import { DraftSupportReplyDto } from './dto/draft-support-reply.dto';
 import { SupportDraftResponse } from './types/support-draft-response.type';
 import { UsageEventType } from '../../generated/prisma/enums';
 import { UsageService } from '../usage/usage.service';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class SupportService {
@@ -18,6 +19,7 @@ export class SupportService {
     @Inject(AI_PROVIDER)
     private readonly aiProvider: AiProvider,
     private readonly usageService: UsageService,
+    private readonly auditService: AuditService,
   ) {}
 
   async draftReply(
@@ -74,6 +76,20 @@ export class SupportService {
       type: UsageEventType.support_reply_generated,
       metadata: {
         supportDraftId: supportDraft.id,
+        messageLength: dto.customerMessage.length,
+        sourcesCount: sources.length,
+        riskFlags: aiResult.riskFlags,
+        needsHumanReview: aiResult.needsHumanReview,
+      },
+    });
+
+    await this.auditService.log({
+      organizationId,
+      actorUserId: user.id,
+      action: AuditLogAction.support_draft_generated,
+      entityType: 'support_draft',
+      entityId: supportDraft.id,
+      metadata: {
         messageLength: dto.customerMessage.length,
         sourcesCount: sources.length,
         riskFlags: aiResult.riskFlags,

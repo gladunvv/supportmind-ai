@@ -7,6 +7,7 @@ import { TextChunkerService } from './services/text-chunker.service';
 import { TextExtractorService } from './services/text-extractor.service';
 import { EmbeddingsModule } from '../embeddings/embeddings.module';
 import { UsageModule } from '../usage/usage.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UsageModule } from '../usage/usage.module';
       name: DOCUMENT_INGESTION_QUEUE,
     }),
     UsageModule,
+    AuditModule,
   ],
   providers: [
     DocumentIngestionService,

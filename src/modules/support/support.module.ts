@@ -6,6 +6,7 @@ import { SearchModule } from '../search/search.module';
 import { SupportController } from './support.controller';
 import { SupportService } from './support.service';
 import { UsageModule } from '../usage/usage.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { UsageModule } from '../usage/usage.module';
     SearchModule,
     AiModule,
     UsageModule,
+    AuditModule,
   ],
   controllers: [SupportController],
   providers: [SupportService],

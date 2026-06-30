@@ -92,7 +92,8 @@ export class DocumentsController {
   remove(
     @CurrentOrganization() organization: RequestOrganization,
     @Param('documentId') documentId: string,
+    @CurrentUser() user: AuthUser,
   ) {
-    return this.documentsService.remove(organization.id, documentId);
+    return this.documentsService.remove(organization.id, documentId, user.id);
   }
 }

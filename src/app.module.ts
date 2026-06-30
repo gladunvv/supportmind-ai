@@ -13,6 +13,7 @@ import { SearchModule } from './modules/search/search.module';
 import { AiModule } from './modules/ai/ai.module';
 import { SupportModule } from './modules/support/support.module';
 import { UsageModule } from './modules/usage/usage.module';
+import { AuditModule } from './modules/audit/audit.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { UsageModule } from './modules/usage/usage.module';
     AiModule,
     SupportModule,
     UsageModule,
+    AuditModule,
   ],
 })
 export class AppModule {}

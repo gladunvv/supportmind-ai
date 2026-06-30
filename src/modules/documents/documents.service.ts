@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DocumentStatus } from '../../generated/prisma/enums';
+import { AuditLogAction, DocumentStatus } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   STORAGE_PROVIDER,
@@ -15,6 +15,7 @@ import { DocumentIngestionService } from '../document-ingestion/services/documen
 import type { Prisma } from '../../generated/prisma/client';
 import { UsageEventType } from '../../generated/prisma/enums';
 import { UsageService } from '../usage/usage.service';
+import { AuditService } from '../audit/audit.service';
 
 const ALLOWED_MIME_TYPES = new Set([
   'text/plain',
@@ -50,6 +51,7 @@ export class DocumentsService {
     private readonly storageProvider: StorageProvider,
     private readonly documentIngestionService: DocumentIngestionService,
     private readonly usageService: UsageService,
+    private readonly auditService: AuditService,
   ) {}
 
   async upload(
@@ -89,6 +91,20 @@ export class DocumentsService {
       userId: uploadedById,
       type: UsageEventType.document_uploaded,
       quantity: 1,
+    });
+
+    await this.auditService.log({
+      organizationId: document.organizationId,
+      actorUserId: uploadedById,
+      action: AuditLogAction.document_uploaded,
+      entityType: 'document',
+      entityId: document.id,
+      metadata: {
+        title: document.title,
+        originalName: document.originalName,
+        mimeType: document.mimeType,
+        sizeBytes: document.sizeBytes,
+      },
     });
 
     return document;
@@ -133,6 +149,7 @@ export class DocumentsService {
   async remove(
     organizationId: string,
     documentId: string,
+    userId: string,
   ): Promise<{ success: true }> {
     const document = await this.prisma.document.findFirst({
       where: {
@@ -162,6 +179,18 @@ export class DocumentsService {
       data: {
         status: DocumentStatus.deleted,
         deletedAt: new Date(),
+      },
+    });
+
+    await this.auditService.log({
+      organizationId,
+      actorUserId: userId,
+      action: AuditLogAction.document_deleted,
+      entityType: 'document',
+      entityId: document.id,
+      metadata: {
+        title: document.title,
+        originalName: document.originalName,
       },
     });
 
