@@ -1,4 +1,5 @@
 import { AuditLogAction } from '../../../generated/prisma/enums';
+import { Prisma } from '@prisma/client';
 
 export type CreateAuditLogInput = {
   organizationId: string;
@@ -6,5 +7,5 @@ export type CreateAuditLogInput = {
   action: AuditLogAction;
   entityType: string;
   entityId?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Prisma.InputJsonObject;
 };
