@@ -162,6 +162,8 @@ export class DocumentsService {
       },
       select: {
         id: true,
+        title: true,
+        originalName: true,
         storageKey: true,
       },
     });
