@@ -35,6 +35,8 @@ model User {
 
   auditLogs AuditLog[] @relation("AuditLogs")
 
+  createdApiKeys ApiKey[] @relation("CreatedApiKeys")
+
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
@@ -58,6 +60,8 @@ model Organization {
   usageEvents UsageEvent[]
 
   auditLogs AuditLog[]
+
+  apiKeys ApiKey[]
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -277,4 +281,36 @@ model AuditLog {
   @@index([entityType])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+enum ApiKeyStatus {
+  active
+  revoked
+}
+
+model ApiKey {
+  id             String       @id @default(cuid())
+
+  organizationId String
+  createdById    String?
+
+  name           String
+  keyHash        String       @unique
+  keyPrefix      String
+  status         ApiKeyStatus @default(active)
+
+  lastUsedAt     DateTime?
+  revokedAt      DateTime?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy      User?        @relation("CreatedApiKeys", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([createdById])
+  @@index([status])
+  @@index([keyPrefix])
+  @@map("api_keys")
 }
