@@ -14,6 +14,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { SupportModule } from './modules/support/support.module';
 import { UsageModule } from './modules/usage/usage.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { AuditModule } from './modules/audit/audit.module';
     SupportModule,
     UsageModule,
     AuditModule,
+    ApiKeysModule,
   ],
 })
 export class AppModule {}
