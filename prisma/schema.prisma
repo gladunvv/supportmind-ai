@@ -215,7 +215,7 @@ enum UsageEventType {
   embedding_generated
   ai_question_asked
   support_reply_generated
-  pi_key_request
+  api_key_request
 }
 
 model UsageEvent {
