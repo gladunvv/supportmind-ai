@@ -257,6 +257,10 @@ enum AuditLogAction {
 
   ai_question_asked
   support_draft_generated
+
+  api_key_created
+  api_key_revoked
+  api_key_used
 }
 
 model AuditLog {
