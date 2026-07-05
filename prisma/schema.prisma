@@ -63,6 +63,8 @@ model Organization {
 
   apiKeys ApiKey[]
 
+  knowledgeGaps KnowledgeGap[]
+
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   archivedAt  DateTime?
@@ -216,6 +218,7 @@ enum UsageEventType {
   ai_question_asked
   support_reply_generated
   api_key_request
+  knowledge_gap_detected
 }
 
 model UsageEvent {
@@ -261,6 +264,10 @@ enum AuditLogAction {
   api_key_created
   api_key_revoked
   api_key_used
+
+  knowledge_gap_created
+  knowledge_gap_resolved
+  knowledge_gap_ignored
 }
 
 model AuditLog {
@@ -318,4 +325,38 @@ model ApiKey {
   @@index([status])
   @@index([keyPrefix])
   @@map("api_keys")
+}
+
+enum KnowledgeGapStatus {
+  open
+  ignored
+  resolved
+}
+
+
+model KnowledgeGap {
+  id             String             @id @default(cuid())
+
+  organizationId String
+
+  question       String
+  normalizedText String
+  status         KnowledgeGapStatus @default(open)
+
+  frequency      Int                @default(1)
+  lastAskedAt    DateTime           @default(now())
+
+  exampleSources Json?
+  metadata       Json?
+
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@unique([organizationId, normalizedText])
+  @@index([organizationId])
+  @@index([status])
+  @@index([lastAskedAt])
+  @@map("knowledge_gaps")
 }
