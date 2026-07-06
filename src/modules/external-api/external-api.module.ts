@@ -6,9 +6,16 @@ import { SearchModule } from '../search/search.module';
 import { UsageModule } from '../usage/usage.module';
 import { ExternalApiController } from './external-api.controller';
 import { ExternalApiService } from './external-api.service';
-
+import { KnowledgeGapsModule } from '../knowledge-gaps/knowledge-gaps.module';
 @Module({
-  imports: [ApiKeysModule, SearchModule, AiModule, UsageModule, AuditModule],
+  imports: [
+    ApiKeysModule,
+    SearchModule,
+    AiModule,
+    UsageModule,
+    AuditModule,
+    KnowledgeGapsModule,
+  ],
   controllers: [ExternalApiController],
   providers: [ExternalApiService],
 })

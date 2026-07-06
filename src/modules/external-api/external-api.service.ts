@@ -6,6 +6,7 @@ import { AiSource } from '../ai/types/ai-source.type';
 import { SearchService } from '../search/search.service';
 import { UsageService } from '../usage/usage.service';
 import { ExternalAskDto } from './dto/external-ask.dto';
+import { KnowledgeGapsService } from '../knowledge-gaps/knowledge-gaps.service';
 
 export type ExternalAskResponse = {
   answer: string;
@@ -21,6 +22,7 @@ export class ExternalApiService {
     private readonly auditService: AuditService,
     @Inject(AI_PROVIDER)
     private readonly aiProvider: AiProvider,
+    private readonly knowledgeGapsService: KnowledgeGapsService,
   ) {}
 
   async ask(
@@ -69,6 +71,18 @@ export class ExternalApiService {
         needsHumanReview: aiResult.needsHumanReview,
       },
     });
+
+    const bestScore = sources[0]?.score;
+
+    if (sources.length === 0 || bestScore === undefined || bestScore < 0.2) {
+      await this.knowledgeGapsService.track({
+        organizationId,
+        question: dto.question,
+        sourcesCount: sources.length,
+        bestScore,
+        reason: sources.length === 0 ? 'no_sources' : 'low_score',
+      });
+    }
 
     return {
       answer: aiResult.answer,

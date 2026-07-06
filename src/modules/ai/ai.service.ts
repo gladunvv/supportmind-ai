@@ -10,6 +10,7 @@ import { AiSource } from './types/ai-source.type';
 import { UsageEventType } from '../../generated/prisma/enums';
 import { UsageService } from '../usage/usage.service';
 import { AuditService } from '../audit/audit.service';
+import { KnowledgeGapsService } from '../knowledge-gaps/knowledge-gaps.service';
 
 @Injectable()
 export class AiService {
@@ -20,6 +21,7 @@ export class AiService {
     private readonly aiProvider: AiProvider,
     private readonly usageService: UsageService,
     private readonly auditService: AuditService,
+    private readonly knowledgeGapsService: KnowledgeGapsService,
   ) {}
 
   async ask(
@@ -81,6 +83,19 @@ export class AiService {
         needsHumanReview: aiResult.needsHumanReview,
       },
     });
+
+    const bestScore = sources[0]?.score;
+
+    if (sources.length === 0 || bestScore === undefined || bestScore < 0.2) {
+      await this.knowledgeGapsService.track({
+        organizationId,
+        actorUserId: user.id,
+        question: dto.question,
+        sourcesCount: sources.length,
+        bestScore,
+        reason: sources.length === 0 ? 'no_sources' : 'low_score',
+      });
+    }
 
     return {
       answer: aiResult.answer,

@@ -15,6 +15,7 @@ import { SupportModule } from './modules/support/support.module';
 import { UsageModule } from './modules/usage/usage.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { ApiKeysModule } from './modules/api-keys/api-keys.module';
+import { KnowledgeGapsModule } from './modules/knowledge-gaps/knowledge-gaps.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { ApiKeysModule } from './modules/api-keys/api-keys.module';
     UsageModule,
     AuditModule,
     ApiKeysModule,
+    KnowledgeGapsModule,
   ],
 })
 export class AppModule {}

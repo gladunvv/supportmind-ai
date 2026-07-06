@@ -8,6 +8,7 @@ import { AI_PROVIDER } from './providers/ai-provider.interface';
 import { MockAiProvider } from './providers/mock-ai.provider';
 import { UsageModule } from '../usage/usage.module';
 import { AuditModule } from '../audit/audit.module';
+import { KnowledgeGapsModule } from '../knowledge-gaps/knowledge-gaps.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AuditModule } from '../audit/audit.module';
     SearchModule,
     UsageModule,
     AuditModule,
+    KnowledgeGapsModule,
   ],
   controllers: [AiController],
   providers: [
