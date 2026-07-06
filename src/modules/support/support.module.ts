@@ -7,6 +7,7 @@ import { SupportController } from './support.controller';
 import { SupportService } from './support.service';
 import { UsageModule } from '../usage/usage.module';
 import { AuditModule } from '../audit/audit.module';
+import { KnowledgeGapsModule } from '../knowledge-gaps/knowledge-gaps.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AuditModule } from '../audit/audit.module';
     AiModule,
     UsageModule,
     AuditModule,
+    KnowledgeGapsModule,
   ],
   controllers: [SupportController],
   providers: [SupportService],
