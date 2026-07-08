@@ -8,7 +8,7 @@ import { SupportService } from './support.service';
 import { UsageModule } from '../usage/usage.module';
 import { AuditModule } from '../audit/audit.module';
 import { KnowledgeGapsModule } from '../knowledge-gaps/knowledge-gaps.module';
-
+import { WebhooksModule } from '../webhooks/webhooks.module';
 @Module({
   imports: [
     AuthModule,
@@ -18,6 +18,7 @@ import { KnowledgeGapsModule } from '../knowledge-gaps/knowledge-gaps.module';
     UsageModule,
     AuditModule,
     KnowledgeGapsModule,
+    WebhooksModule,
   ],
   controllers: [SupportController],
   providers: [SupportService],

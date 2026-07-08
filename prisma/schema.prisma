@@ -37,6 +37,8 @@ model User {
 
   createdApiKeys ApiKey[] @relation("CreatedApiKeys")
 
+  createdWebhookEndpoints WebhookEndpoint[] @relation("CreatedWebhookEndpoints")
+
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
@@ -64,6 +66,9 @@ model Organization {
   apiKeys ApiKey[]
 
   knowledgeGaps KnowledgeGap[]
+
+  webhookEndpoints WebhookEndpoint[]
+  webhookDeliveries WebhookDelivery[]
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -268,6 +273,11 @@ enum AuditLogAction {
   knowledge_gap_created
   knowledge_gap_resolved
   knowledge_gap_ignored
+
+  webhook_endpoint_created
+  webhook_endpoint_disabled
+  webhook_delivery_succeeded
+  webhook_delivery_failed
 }
 
 model AuditLog {
@@ -359,4 +369,78 @@ model KnowledgeGap {
   @@index([status])
   @@index([lastAskedAt])
   @@map("knowledge_gaps")
+}
+
+enum WebhookEventType {
+  document_indexed
+  document_failed
+  ai_question_needs_review
+  support_draft_needs_review
+  knowledge_gap_created
+}
+
+enum WebhookEndpointStatus {
+  active
+  disabled
+}
+
+enum WebhookDeliveryStatus {
+  pending
+  succeeded
+  failed
+}
+
+model WebhookEndpoint {
+  id             String                @id @default(cuid())
+
+  organizationId String
+  createdById    String?
+
+  name           String
+  url            String
+  secret         String
+  status         WebhookEndpointStatus @default(active)
+
+  events         WebhookEventType[]
+
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy      User?                 @relation("CreatedWebhookEndpoints", fields: [createdById], references: [id], onDelete: SetNull)
+  deliveries     WebhookDelivery[]
+
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  disabledAt     DateTime?
+
+  @@index([organizationId])
+  @@index([createdById])
+  @@index([status])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id                String                @id @default(cuid())
+
+  organizationId    String
+  webhookEndpointId String
+
+  eventType         WebhookEventType
+  status            WebhookDeliveryStatus @default(pending)
+
+  payload           Json
+  responseStatus    Int?
+  responseBody      String?
+  errorMessage      String?
+
+  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  webhookEndpoint   WebhookEndpoint       @relation(fields: [webhookEndpointId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime              @default(now())
+  deliveredAt       DateTime?
+
+  @@index([organizationId])
+  @@index([webhookEndpointId])
+  @@index([eventType])
+  @@index([status])
+  @@index([createdAt])
+  @@map("webhook_deliveries")
 }
