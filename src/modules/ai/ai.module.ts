@@ -9,6 +9,7 @@ import { MockAiProvider } from './providers/mock-ai.provider';
 import { UsageModule } from '../usage/usage.module';
 import { AuditModule } from '../audit/audit.module';
 import { KnowledgeGapsModule } from '../knowledge-gaps/knowledge-gaps.module';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { KnowledgeGapsModule } from '../knowledge-gaps/knowledge-gaps.module';
     UsageModule,
     AuditModule,
     KnowledgeGapsModule,
+    WebhooksModule,
   ],
   controllers: [AiController],
   providers: [

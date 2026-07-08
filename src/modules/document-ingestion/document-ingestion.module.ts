@@ -8,6 +8,7 @@ import { TextExtractorService } from './services/text-extractor.service';
 import { EmbeddingsModule } from '../embeddings/embeddings.module';
 import { UsageModule } from '../usage/usage.module';
 import { AuditModule } from '../audit/audit.module';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AuditModule } from '../audit/audit.module';
     }),
     UsageModule,
     AuditModule,
+    WebhooksModule,
   ],
   providers: [
     DocumentIngestionService,

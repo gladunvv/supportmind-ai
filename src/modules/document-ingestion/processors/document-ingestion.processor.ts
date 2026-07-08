@@ -24,6 +24,9 @@ import { UsageService } from '../../usage/usage.service';
 import { createId } from '@paralleldrive/cuid2';
 import { AuditService } from 'src/modules/audit/audit.service';
 
+import { WebhookEventType } from '../../../generated/prisma/enums';
+import { WebhooksService } from '../../webhooks/webhooks.service';
+
 @Processor(DOCUMENT_INGESTION_QUEUE)
 @Injectable()
 export class DocumentIngestionProcessor extends WorkerHost {
@@ -37,6 +40,7 @@ export class DocumentIngestionProcessor extends WorkerHost {
     private readonly embeddingProvider: EmbeddingProvider,
     private readonly usageService: UsageService,
     private readonly auditService: AuditService,
+    private readonly webhooksService: WebhooksService,
   ) {
     super();
   }
@@ -123,6 +127,15 @@ export class DocumentIngestionProcessor extends WorkerHost {
           `;
         }
 
+        await this.webhooksService.emit({
+          organizationId: document.organizationId,
+          eventType: WebhookEventType.document_indexed,
+          payload: {
+            documentId: document.id,
+            chunksCount: chunks.length,
+          },
+        });
+
         await tx.document.update({
           where: {
             id: document.id,
@@ -171,6 +184,15 @@ export class DocumentIngestionProcessor extends WorkerHost {
         entityType: 'document',
         entityId: documentId,
         metadata: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
+
+      await this.webhooksService.emit({
+        organizationId,
+        eventType: WebhookEventType.document_failed,
+        payload: {
+          documentId,
           error: error instanceof Error ? error.message : 'Unknown error',
         },
       });

@@ -16,6 +16,7 @@ import { UsageModule } from './modules/usage/usage.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 import { KnowledgeGapsModule } from './modules/knowledge-gaps/knowledge-gaps.module';
+import { WebhooksModule } from './modules/webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { KnowledgeGapsModule } from './modules/knowledge-gaps/knowledge-gaps.mod
     AuditModule,
     ApiKeysModule,
     KnowledgeGapsModule,
+    WebhooksModule,
   ],
 })
 export class AppModule {}

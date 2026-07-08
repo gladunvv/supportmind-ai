@@ -9,6 +9,8 @@ import { AuditService } from '../audit/audit.service';
 import { UsageService } from '../usage/usage.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { KnowledgeGapResponse } from './types/knowledge-gap-response.type';
+import { WebhookEventType } from '../../generated/prisma/enums';
+import { WebhooksService } from '../webhooks/webhooks.service';
 
 const KNOWLEDGE_GAP_SELECT = {
   id: true,
@@ -39,6 +41,7 @@ export class KnowledgeGapsService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly usageService: UsageService,
+    private readonly webhooksService: WebhooksService,
   ) {}
 
   async track(input: TrackKnowledgeGapInput): Promise<void> {
@@ -101,6 +104,16 @@ export class KnowledgeGapsService {
           reason: input.reason,
           sourcesCount: input.sourcesCount,
           bestScore: input.bestScore,
+        },
+      });
+
+      await this.webhooksService.emit({
+        organizationId: input.organizationId,
+        eventType: WebhookEventType.knowledge_gap_created,
+        payload: {
+          knowledgeGapId: gap.id,
+          question: input.question,
+          reason: input.reason,
         },
       });
     }

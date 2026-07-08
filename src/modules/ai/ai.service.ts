@@ -11,6 +11,8 @@ import { UsageEventType } from '../../generated/prisma/enums';
 import { UsageService } from '../usage/usage.service';
 import { AuditService } from '../audit/audit.service';
 import { KnowledgeGapsService } from '../knowledge-gaps/knowledge-gaps.service';
+import { WebhookEventType } from '../../generated/prisma/enums';
+import { WebhooksService } from '../webhooks/webhooks.service';
 
 @Injectable()
 export class AiService {
@@ -22,6 +24,7 @@ export class AiService {
     private readonly usageService: UsageService,
     private readonly auditService: AuditService,
     private readonly knowledgeGapsService: KnowledgeGapsService,
+    private readonly webhooksService: WebhooksService,
   ) {}
 
   async ask(
@@ -94,6 +97,19 @@ export class AiService {
         sourcesCount: sources.length,
         bestScore,
         reason: sources.length === 0 ? 'no_sources' : 'low_score',
+      });
+    }
+
+    if (aiResult.needsHumanReview) {
+      await this.webhooksService.emit({
+        organizationId,
+        eventType: WebhookEventType.ai_question_needs_review,
+        payload: {
+          aiQuestionId: aiQuestion.id,
+          question: dto.question,
+          sourcesCount: sources.length,
+          needsHumanReview: aiResult.needsHumanReview,
+        },
       });
     }
 
