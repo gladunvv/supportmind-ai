@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -8,6 +8,7 @@ import { CurrentOrganization } from '../organizations/decorators/current-organiz
 import { OrganizationMemberGuard } from '../organizations/guards/organization-member.guard';
 import { RequestOrganization } from '../organizations/types/request-with-organization.type';
 import { AuditService } from './audit.service';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 @ApiTags('Audit Logs')
 @ApiBearerAuth()
@@ -24,7 +25,8 @@ export class AuditController {
   })
   findForOrganization(
     @CurrentOrganization() organization: RequestOrganization,
+    @Query() query: PaginationQueryDto,
   ) {
-    return this.auditService.findForOrganization(organization.id);
+    return this.auditService.findForOrganization(organization.id, query);
   }
 }
