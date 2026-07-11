@@ -18,6 +18,12 @@ import { EmitWebhookEventInput } from './types/emit-webhook-event.type';
 import { WebhookDeliveryResponse } from './types/webhook-delivery-response.type';
 import { WebhookEndpointResponse } from './types/webhook-endpoint-response.type';
 import { createWebhookSignature } from './utils/webhook-signature.util';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { PaginatedResponse } from '../../common/types/paginated-response.type';
+import {
+  getPaginationParams,
+  getTotalPages,
+} from '../../common/utils/pagination.util';
 
 const WEBHOOK_ENDPOINT_SELECT = {
   id: true,
@@ -158,17 +164,38 @@ export class WebhooksService {
 
   async findDeliveries(
     organizationId: string,
-  ): Promise<WebhookDeliveryResponse[]> {
-    return this.prisma.webhookDelivery.findMany({
-      where: {
-        organizationId,
+    query: PaginationQueryDto,
+  ): Promise<PaginatedResponse<WebhookDeliveryResponse>> {
+    const pagination = getPaginationParams(query);
+
+    const [deliveries, total] = await this.prisma.$transaction([
+      this.prisma.webhookDelivery.findMany({
+        where: {
+          organizationId,
+        },
+        select: WEBHOOK_DELIVERY_SELECT,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip: pagination.skip,
+        take: pagination.take,
+      }),
+      this.prisma.webhookDelivery.count({
+        where: {
+          organizationId,
+        },
+      }),
+    ]);
+
+    return {
+      data: deliveries,
+      meta: {
+        page: pagination.page,
+        limit: pagination.limit,
+        total,
+        totalPages: getTotalPages(total, pagination.limit),
       },
-      select: WEBHOOK_DELIVERY_SELECT,
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: 100,
-    });
+    };
   }
 
   async emit(input: EmitWebhookEventInput): Promise<void> {

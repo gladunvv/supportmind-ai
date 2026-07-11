@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -24,6 +25,7 @@ import { OrganizationMemberGuard } from '../organizations/guards/organization-me
 import { RequestOrganization } from '../organizations/types/request-with-organization.type';
 import { CreateWebhookEndpointDto } from './dto/create-webhook-endpoint.dto';
 import { WebhooksService } from './webhooks.service';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 @ApiTags('Webhooks')
 @ApiBearerAuth()
@@ -63,8 +65,11 @@ export class WebhooksController {
   @ApiOkResponse({
     description: 'List recent webhook deliveries.',
   })
-  findDeliveries(@CurrentOrganization() organization: RequestOrganization) {
-    return this.webhooksService.findDeliveries(organization.id);
+  findDeliveries(
+    @CurrentOrganization() organization: RequestOrganization,
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.webhooksService.findDeliveries(organization.id, query);
   }
 
   @Delete(':webhookEndpointId')
