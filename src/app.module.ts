@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
@@ -17,8 +17,18 @@ import { AuditModule } from './modules/audit/audit.module';
 import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 import { KnowledgeGapsModule } from './modules/knowledge-gaps/knowledge-gaps.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @Module({
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
@@ -29,6 +39,12 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
         port: Number(process.env.REDIS_PORT ?? 6379),
       },
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
     PrismaModule,
     HealthModule,
     UsersModule,
@@ -47,4 +63,8 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
     WebhooksModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}

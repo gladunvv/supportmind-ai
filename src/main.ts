@@ -11,8 +11,10 @@ async function bootstrap(): Promise<void> {
 
   app.use(helmet());
 
+  const corsOrigin = process.env.CORS_ORIGIN;
+
   app.enableCors({
-    origin: true,
+    origin: corsOrigin ? corsOrigin.split(',') : true,
     credentials: true,
   });
 
