@@ -1,5 +1,3 @@
-// src/modules/embeddings/providers/mock-embedding.provider.ts
-
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { EmbeddingProvider } from './embedding-provider.interface';
