@@ -1,4 +1,4 @@
-import { UploadedDocumentFile } from '../types/uploaded-file.type';
+import { UploadedDocumentFile } from '../types/uploaded-document-file.type';
 
 export type StoredFile = {
   key: string;

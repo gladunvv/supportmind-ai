@@ -10,7 +10,7 @@ import {
   STORAGE_PROVIDER,
   type StorageProvider,
 } from './storage/storage-provider.interface';
-import { UploadedDocumentFile } from './types/uploaded-file.type';
+import { UploadedDocumentFile } from './types/uploaded-document-file.type';
 import { DocumentIngestionService } from '../document-ingestion/services/document-ingestion.service';
 import type { Prisma } from '../../generated/prisma/client';
 import { UsageEventType } from '../../generated/prisma/enums';
