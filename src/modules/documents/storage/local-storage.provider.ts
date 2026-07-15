@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { mkdir, rm, writeFile } from 'fs/promises';
 import { extname, join } from 'path';
 import { StorageProvider, StoredFile } from './storage-provider.interface';
-import { UploadedDocumentFile } from '../types/uploaded-file.type';
+import { UploadedDocumentFile } from '../types/uploaded-document-file.type';
 
 @Injectable()
 export class LocalStorageProvider implements StorageProvider {

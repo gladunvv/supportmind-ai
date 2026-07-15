@@ -27,7 +27,7 @@ import { CurrentOrganization } from '../organizations/decorators/current-organiz
 import { OrganizationMemberGuard } from '../organizations/guards/organization-member.guard';
 import { type RequestOrganization } from '../organizations/types/request-with-organization.type';
 import { DocumentsService } from './documents.service';
-import { type UploadedDocumentFile } from './types/uploaded-file.type';
+import { type UploadedDocumentFile } from './types/uploaded-document-file.type';
 
 @ApiTags('Documents')
 @ApiBearerAuth()
