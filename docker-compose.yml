@@ -1,26 +1,84 @@
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: supportmind_postgres
     restart: unless-stopped
+
     environment:
       POSTGRES_USER: supportmind
       POSTGRES_PASSWORD: supportmind
       POSTGRES_DB: supportmind
+
     ports:
-      - "5432:5432"
+      - '5432:5432'
+
     volumes:
-      - supportmind_postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U supportmind -d supportmind',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
-    image: redis:7
-    container_name: supportmind_redis
+    image: redis:7-alpine
     restart: unless-stopped
+
     ports:
-      - "6379:6379"
+      - '6379:6379'
+
     volumes:
-      - supportmind_redis_data:/data
+      - redis_data:/data
+
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+
+      DATABASE_URL: postgresql://supportmind:supportmind@postgres:5432/supportmind
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-development_access_secret_change_me}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-development_refresh_secret_change_me}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+
+      UPLOAD_DIR: storage/uploads
+      MAX_DOCUMENT_SIZE_MB: ${MAX_DOCUMENT_SIZE_MB:-10}
+
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001}
+
+    ports:
+      - '3000:3000'
+
+    volumes:
+      - uploads_data:/app/storage/uploads
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
-  supportmind_postgres_data:
-  supportmind_redis_data:
+  postgres_data:
+  redis_data:
+  uploads_data:

@@ -1,5 +1,5 @@
 import { AuditLogAction } from '../../../generated/prisma/enums';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../../generated/prisma/client';
 
 export type CreateAuditLogInput = {
   organizationId: string;
