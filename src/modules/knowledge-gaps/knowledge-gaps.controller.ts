@@ -11,8 +11,6 @@ import { OrganizationMemberGuard } from '../organizations/guards/organization-me
 import { RequestOrganization } from '../organizations/types/request-with-organization.type';
 import { UpdateKnowledgeGapStatusDto } from './dto/update-knowledge-gap-status.dto';
 import { KnowledgeGapsService } from './knowledge-gaps.service';
-import { WebhookEventType } from '../../generated/prisma/enums';
-import { WebhooksService } from '../webhooks/webhooks.service';
 
 @ApiTags('Knowledge Gaps')
 @ApiBearerAuth()
