@@ -43,7 +43,7 @@ jobs:
         run: pnpm lint
 
       - name: Unit tests
-        run: pnpm test --runInBand
+        run: pnpm test:unit --runInBand
 
       - name: Build
         run: pnpm build
