@@ -74,8 +74,10 @@ describe('AuthService', () => {
 
     mockedArgon2.hash.mockReset();
     mockedArgon2.verify.mockReset();
-    mockedArgon2.hash.mockImplementation(async (value: string) =>
-      value === refreshToken ? user.refreshTokenHash : user.passwordHash,
+    mockedArgon2.hash.mockImplementation((value: string) =>
+      Promise.resolve(
+        value === refreshToken ? user.refreshTokenHash : user.passwordHash,
+      ),
     );
 
     service = new AuthService(
