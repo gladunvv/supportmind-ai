@@ -20,14 +20,11 @@ async function main(): Promise<void> {
     throw new Error('DATABASE_URL is not defined');
   }
 
-  // Prisma adapter typings may trigger false-positive no-unsafe-* warnings.
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const adapter = new PrismaPg({
     connectionString: databaseUrl,
   });
 
   const prisma = new PrismaClient({
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     adapter,
   });
 
