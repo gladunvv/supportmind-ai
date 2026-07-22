@@ -62,7 +62,7 @@ export class WebhooksService {
     user: AuthUser,
     dto: CreateWebhookEndpointDto,
   ): Promise<WebhookEndpointResponse & { secret: string }> {
-    if (!dto.url.startsWith('https://') && !dto.url.includes('localhost')) {
+    if (!this.isAllowedWebhookUrl(dto.url)) {
       throw new BadRequestException(
         'Webhook URL must use HTTPS, except localhost for development',
       );
@@ -323,6 +323,25 @@ export class WebhooksService {
         },
       });
     }
+  }
+
+  private isAllowedWebhookUrl(url: string): boolean {
+    let parsed: URL;
+
+    try {
+      parsed = new URL(url);
+    } catch {
+      return false;
+    }
+
+    if (parsed.protocol === 'https:') {
+      return true;
+    }
+
+    return (
+      parsed.protocol === 'http:' &&
+      (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1')
+    );
   }
 
   private generateSecret(): string {
