@@ -22,7 +22,7 @@ import { UsageEventType } from '../../../generated/prisma/enums';
 import { UsageService } from '../../usage/usage.service';
 
 import { createId } from '@paralleldrive/cuid2';
-import { AuditService } from 'src/modules/audit/audit.service';
+import { AuditService } from '../../audit/audit.service';
 
 import { WebhookEventType } from '../../../generated/prisma/enums';
 import { WebhooksService } from '../../webhooks/webhooks.service';
@@ -127,15 +127,6 @@ export class DocumentIngestionProcessor extends WorkerHost {
           `;
         }
 
-        await this.webhooksService.emit({
-          organizationId: document.organizationId,
-          eventType: WebhookEventType.document_indexed,
-          payload: {
-            documentId: document.id,
-            chunksCount: chunks.length,
-          },
-        });
-
         await tx.document.update({
           where: {
             id: document.id,
@@ -162,6 +153,15 @@ export class DocumentIngestionProcessor extends WorkerHost {
             chunksCount: chunks.length,
           },
         });
+      });
+
+      await this.webhooksService.emit({
+        organizationId: document.organizationId,
+        eventType: WebhookEventType.document_indexed,
+        payload: {
+          documentId: document.id,
+          chunksCount: chunks.length,
+        },
       });
     } catch (error) {
       this.logger.error(
