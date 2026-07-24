@@ -29,6 +29,9 @@ import { type RequestOrganization } from '../organizations/types/request-with-or
 import { DocumentsService } from './documents.service';
 import { type UploadedDocumentFile } from './types/uploaded-document-file.type';
 
+const MAX_DOCUMENT_SIZE_BYTES =
+  Number(process.env.MAX_DOCUMENT_SIZE_MB ?? 10) * 1024 * 1024;
+
 @ApiTags('Documents')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, OrganizationMemberGuard)
@@ -39,7 +42,11 @@ export class DocumentsController {
   @Post()
   @UseGuards(PermissionsGuard)
   @RequirePermissions(Permission.UploadDocuments)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: MAX_DOCUMENT_SIZE_BYTES },
+    }),
+  )
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
