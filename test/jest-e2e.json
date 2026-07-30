@@ -7,6 +7,12 @@
   "rootDir": "..",
   "testEnvironment": "node",
   "testRegex": "test/e2e/.*\\.e2e-spec\\.ts$",
+  "moduleNameMapper": {
+    "^@generated/(.*)$": "<rootDir>/src/generated/$1"
+  },
+  "transformIgnorePatterns": [
+    "node_modules/(?!.*(@paralleldrive[/+]cuid2|@noble[/+]hashes|error-causes))"
+  ],
   "transform": {
     "^.+\\.(t|j)s$": [
       "ts-jest",
