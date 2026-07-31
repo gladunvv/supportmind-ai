@@ -17,7 +17,7 @@
     "test:unit": "jest --config test/jest-unit.json",
     "test:watch": "jest --config test/jest-unit.json --watch",
     "test:cov": "jest --config test/jest-unit.json --coverage",
-    "test:e2e": "jest --config test/jest-e2e.json --runInBand"
+    "test:e2e": "REDIS_DB=1 jest --config test/jest-e2e.json --runInBand"
   },
   "engines": {
     "node": ">=22 <23"
