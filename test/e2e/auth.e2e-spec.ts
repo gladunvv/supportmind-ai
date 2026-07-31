@@ -1,9 +1,9 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/modules/prisma/prisma.service';
+import { bootstrapTestApp } from './helpers/bootstrap-app.helper';
+import { uniqueEmail } from './helpers/register-user.helper';
 
 type AuthResponseBody = {
   user: {
@@ -25,26 +25,9 @@ describe('Auth (e2e)', () => {
   let prisma: PrismaService;
   const createdEmails: string[] = [];
 
-  const uniqueEmail = (label: string) =>
-    `e2e-${label}-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}@test.supportmind.dev`;
-
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-    await app.init();
-
-    prisma = moduleFixture.get(PrismaService);
+    app = await bootstrapTestApp();
+    prisma = app.get(PrismaService);
   });
 
   afterAll(async () => {
