@@ -1,4 +1,11 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
@@ -20,6 +27,7 @@ export class SupportController {
   constructor(private readonly supportService: SupportService) {}
 
   @Post('draft-reply')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(PermissionsGuard)
   @RequirePermissions(Permission.GenerateSupportReply)
   @ApiOkResponse({

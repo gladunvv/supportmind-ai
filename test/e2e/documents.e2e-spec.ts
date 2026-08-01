@@ -3,51 +3,11 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { PrismaService } from '../../src/modules/prisma/prisma.service';
 import { bootstrapTestApp } from './helpers/bootstrap-app.helper';
+import {
+  DocumentBody,
+  waitForDocumentStatus,
+} from './helpers/documents.helper';
 import { registerUser, RegisteredUser } from './helpers/register-user.helper';
-
-type DocumentBody = {
-  id: string;
-  organizationId: string;
-  title: string;
-  originalName: string;
-  mimeType: string;
-  sizeBytes: number;
-  status: string;
-};
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-async function waitForStatus(
-  app: INestApplication<App>,
-  accessToken: string,
-  organizationId: string,
-  documentId: string,
-  targetStatuses: string[],
-  timeoutMs = 10_000,
-): Promise<DocumentBody> {
-  const deadline = Date.now() + timeoutMs;
-
-  for (;;) {
-    const response = await request(app.getHttpServer())
-      .get(`/api/organizations/${organizationId}/documents/${documentId}`)
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(200);
-
-    const body = response.body as DocumentBody;
-
-    if (targetStatuses.includes(body.status)) {
-      return body;
-    }
-
-    if (Date.now() > deadline) {
-      throw new Error(
-        `Document ${documentId} did not reach [${targetStatuses.join(', ')}] within ${timeoutMs}ms (last status: ${body.status})`,
-      );
-    }
-
-    await sleep(200);
-  }
-}
 
 describe('Documents (e2e)', () => {
   let app: INestApplication<App>;
@@ -110,7 +70,7 @@ describe('Documents (e2e)', () => {
       expect(body.mimeType).toBe('text/markdown');
       expect(['uploaded', 'processing', 'indexed']).toContain(body.status);
 
-      const indexed = await waitForStatus(
+      const indexed = await waitForDocumentStatus(
         app,
         owner.accessToken,
         organizationId,
@@ -185,10 +145,13 @@ describe('Documents (e2e)', () => {
 
       // Wait for the background ingestion job to reach a terminal state
       // before deleting, so cleanup doesn't race the in-flight job.
-      await waitForStatus(app, owner.accessToken, organizationId, documentId, [
-        'indexed',
-        'failed',
-      ]);
+      await waitForDocumentStatus(
+        app,
+        owner.accessToken,
+        organizationId,
+        documentId,
+        ['indexed', 'failed'],
+      );
 
       await request(app.getHttpServer())
         .delete(`/api/organizations/${organizationId}/documents/${documentId}`)
