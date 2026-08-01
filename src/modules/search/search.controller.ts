@@ -1,4 +1,11 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentOrganization } from '../organizations/decorators/current-organization.decorator';
@@ -15,6 +22,7 @@ export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
   @Post()
+  @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: 'Search organization knowledge base.',
   })

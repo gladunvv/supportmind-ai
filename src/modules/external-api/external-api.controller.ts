@@ -1,4 +1,11 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentApiKey } from '../api-keys/decorators/current-api-key.decorator';
 import { ApiKeyGuard } from '../api-keys/guards/api-key.guard';
@@ -14,6 +21,7 @@ export class ExternalApiController {
   constructor(private readonly externalApiService: ExternalApiService) {}
 
   @Post('ask')
+  @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: 'Ask a question using an API key.',
   })
