@@ -17,6 +17,7 @@ import { SupportModule } from './modules/support/support.module';
 import { UsageModule } from './modules/usage/usage.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { ApiKeysModule } from './modules/api-keys/api-keys.module';
+import { ExternalApiModule } from './modules/external-api/external-api.module';
 import { KnowledgeGapsModule } from './modules/knowledge-gaps/knowledge-gaps.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
@@ -64,6 +65,7 @@ import { ThrottlerGuard } from '@nestjs/throttler';
     UsageModule,
     AuditModule,
     ApiKeysModule,
+    ExternalApiModule,
     KnowledgeGapsModule,
     WebhooksModule,
   ],

@@ -3,33 +3,12 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { PrismaService } from '../../src/modules/prisma/prisma.service';
 import { bootstrapTestApp } from './helpers/bootstrap-app.helper';
+import { addMember, MembershipBody } from './helpers/members.helper';
 import {
   registerUser,
   RegisteredUser,
   uniqueEmail,
 } from './helpers/register-user.helper';
-
-type MembershipBody = {
-  id: string;
-  role: string;
-  user: { id: string; email: string };
-};
-
-async function addMember(
-  app: INestApplication<App>,
-  accessToken: string,
-  organizationId: string,
-  email: string,
-  role: string,
-) {
-  const response = await request(app.getHttpServer())
-    .post(`/api/organizations/${organizationId}/members`)
-    .set('Authorization', `Bearer ${accessToken}`)
-    .send({ email, role })
-    .expect(201);
-
-  return response.body as MembershipBody;
-}
 
 describe('Members (e2e)', () => {
   let app: INestApplication<App>;
