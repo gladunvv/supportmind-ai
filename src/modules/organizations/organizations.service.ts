@@ -2,17 +2,21 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
-import { MembershipRole } from '../../generated/prisma/enums';
+import { MembershipRole, AuditLogAction } from '../../generated/prisma/enums';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class OrganizationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
+  ) {}
 
   async create(userId: string, dto: CreateOrganizationDto) {
     const slug = await this.generateUniqueSlug(dto.name);
 
-    return this.prisma.$transaction(async (tx) => {
-      const organization = await tx.organization.create({
+    const organization = await this.prisma.$transaction(async (tx) => {
+      const createdOrganization = await tx.organization.create({
         data: {
           name: dto.name.trim(),
           slug,
@@ -23,13 +27,27 @@ export class OrganizationsService {
       await tx.membership.create({
         data: {
           userId,
-          organizationId: organization.id,
+          organizationId: createdOrganization.id,
           role: MembershipRole.owner,
         },
       });
 
-      return organization;
+      return createdOrganization;
     });
+
+    await this.auditService.log({
+      organizationId: organization.id,
+      actorUserId: userId,
+      action: AuditLogAction.organization_created,
+      entityType: 'organization',
+      entityId: organization.id,
+      metadata: {
+        name: organization.name,
+        slug: organization.slug,
+      },
+    });
+
+    return organization;
   }
 
   async findAllForUser(userId: string) {
@@ -87,10 +105,14 @@ export class OrganizationsService {
     return organization;
   }
 
-  async update(organizationId: string, dto: UpdateOrganizationDto) {
+  async update(
+    organizationId: string,
+    userId: string,
+    dto: UpdateOrganizationDto,
+  ) {
     await this.ensureOrganizationExists(organizationId);
 
-    return this.prisma.organization.update({
+    const organization = await this.prisma.organization.update({
       where: {
         id: organizationId,
       },
@@ -107,9 +129,26 @@ export class OrganizationsService {
         updatedAt: true,
       },
     });
+
+    await this.auditService.log({
+      organizationId,
+      actorUserId: userId,
+      action: AuditLogAction.organization_updated,
+      entityType: 'organization',
+      entityId: organizationId,
+      metadata: {
+        name: organization.name,
+        description: organization.description,
+      },
+    });
+
+    return organization;
   }
 
-  async archive(organizationId: string): Promise<{ success: true }> {
+  async archive(
+    organizationId: string,
+    userId: string,
+  ): Promise<{ success: true }> {
     await this.ensureOrganizationExists(organizationId);
 
     await this.prisma.organization.update({
@@ -119,6 +158,14 @@ export class OrganizationsService {
       data: {
         archivedAt: new Date(),
       },
+    });
+
+    await this.auditService.log({
+      organizationId,
+      actorUserId: userId,
+      action: AuditLogAction.organization_archived,
+      entityType: 'organization',
+      entityId: organizationId,
     });
 
     return { success: true };

@@ -17,9 +17,11 @@ import {
 import { CurrentOrganization } from '../organizations/decorators/current-organization.decorator';
 import { OrganizationMemberGuard } from '../organizations/guards/organization-member.guard';
 import { type RequestOrganization } from '../organizations/types/request-with-organization.type';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
+import { type AuthUser } from '../auth/types/auth-user.type';
 import { Permission } from '../auth/types/permission.type';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
@@ -50,9 +52,10 @@ export class MembersController {
   })
   addMember(
     @CurrentOrganization() organization: RequestOrganization,
+    @CurrentUser() user: AuthUser,
     @Body() dto: AddMemberDto,
   ) {
-    return this.membersService.addMember(organization.id, dto);
+    return this.membersService.addMember(organization.id, user.id, dto);
   }
 
   @Patch(':membershipId/role')
@@ -63,10 +66,16 @@ export class MembersController {
   })
   updateRole(
     @CurrentOrganization() organization: RequestOrganization,
+    @CurrentUser() user: AuthUser,
     @Param('membershipId') membershipId: string,
     @Body() dto: UpdateMemberRoleDto,
   ) {
-    return this.membersService.updateRole(organization.id, membershipId, dto);
+    return this.membersService.updateRole(
+      organization.id,
+      membershipId,
+      user.id,
+      dto,
+    );
   }
 
   @Delete(':membershipId')
@@ -77,8 +86,13 @@ export class MembersController {
   })
   removeMember(
     @CurrentOrganization() organization: RequestOrganization,
+    @CurrentUser() user: AuthUser,
     @Param('membershipId') membershipId: string,
   ) {
-    return this.membersService.removeMember(organization.id, membershipId);
+    return this.membersService.removeMember(
+      organization.id,
+      membershipId,
+      user.id,
+    );
   }
 }

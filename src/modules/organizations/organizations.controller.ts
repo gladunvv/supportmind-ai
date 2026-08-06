@@ -65,9 +65,10 @@ export class OrganizationsController {
   })
   update(
     @Param('organizationId') organizationId: string,
+    @CurrentUser() user: AuthUser,
     @Body() dto: UpdateOrganizationDto,
   ) {
-    return this.organizationsService.update(organizationId, dto);
+    return this.organizationsService.update(organizationId, user.id, dto);
   }
 
   @Delete(':organizationId')
@@ -76,7 +77,10 @@ export class OrganizationsController {
   @ApiOkResponse({
     description: 'Archive organization.',
   })
-  archive(@Param('organizationId') organizationId: string) {
-    return this.organizationsService.archive(organizationId);
+  archive(
+    @Param('organizationId') organizationId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.organizationsService.archive(organizationId, user.id);
   }
 }

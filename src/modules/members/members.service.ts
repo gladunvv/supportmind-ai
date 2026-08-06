@@ -4,14 +4,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { MembershipRole } from '../../generated/prisma/enums';
+import { MembershipRole, AuditLogAction } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 
 @Injectable()
 export class MembersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
+  ) {}
 
   async findAll(organizationId: string) {
     return this.prisma.membership.findMany({
@@ -40,7 +44,11 @@ export class MembersService {
     });
   }
 
-  async addMember(organizationId: string, dto: AddMemberDto) {
+  async addMember(
+    organizationId: string,
+    actorUserId: string,
+    dto: AddMemberDto,
+  ) {
     const email = dto.email.toLowerCase().trim();
 
     const user = await this.prisma.user.findUnique({
@@ -75,7 +83,7 @@ export class MembersService {
       );
     }
 
-    return this.prisma.membership.create({
+    const membership = await this.prisma.membership.create({
       data: {
         userId: user.id,
         organizationId,
@@ -95,11 +103,26 @@ export class MembersService {
         },
       },
     });
+
+    await this.auditService.log({
+      organizationId,
+      actorUserId,
+      action: AuditLogAction.member_added,
+      entityType: 'membership',
+      entityId: membership.id,
+      metadata: {
+        email: membership.user.email,
+        role: membership.role,
+      },
+    });
+
+    return membership;
   }
 
   async updateRole(
     organizationId: string,
     membershipId: string,
+    actorUserId: string,
     dto: UpdateMemberRoleDto,
   ) {
     const membership = await this.findMembershipOrThrow(
@@ -114,7 +137,7 @@ export class MembersService {
       await this.ensureAnotherOwnerExists(organizationId, membershipId);
     }
 
-    return this.prisma.membership.update({
+    const updatedMembership = await this.prisma.membership.update({
       where: {
         id: membershipId,
       },
@@ -135,9 +158,27 @@ export class MembersService {
         },
       },
     });
+
+    await this.auditService.log({
+      organizationId,
+      actorUserId,
+      action: AuditLogAction.member_role_updated,
+      entityType: 'membership',
+      entityId: membershipId,
+      metadata: {
+        previousRole: membership.role,
+        newRole: updatedMembership.role,
+      },
+    });
+
+    return updatedMembership;
   }
 
-  async removeMember(organizationId: string, membershipId: string) {
+  async removeMember(
+    organizationId: string,
+    membershipId: string,
+    actorUserId: string,
+  ) {
     const membership = await this.findMembershipOrThrow(
       organizationId,
       membershipId,
@@ -150,6 +191,17 @@ export class MembersService {
     await this.prisma.membership.delete({
       where: {
         id: membershipId,
+      },
+    });
+
+    await this.auditService.log({
+      organizationId,
+      actorUserId,
+      action: AuditLogAction.member_removed,
+      entityType: 'membership',
+      entityId: membershipId,
+      metadata: {
+        previousRole: membership.role,
       },
     });
 

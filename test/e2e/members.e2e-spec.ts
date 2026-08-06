@@ -62,6 +62,15 @@ describe('Members (e2e)', () => {
 
       expect(membership.role).toBe('support_agent');
       expect(membership.user.email).toBe(candidate.email);
+
+      const auditLog = await prisma.auditLog.findFirst({
+        where: {
+          organizationId,
+          action: 'member_added',
+          entityId: membership.id,
+        },
+      });
+      expect(auditLog?.actorUserId).toBe(owner.userId);
     });
 
     it('rejects adding a user who has not registered', async () => {
@@ -129,6 +138,15 @@ describe('Members (e2e)', () => {
         .expect(200);
 
       expect((response.body as MembershipBody).role).toBe('admin');
+
+      const auditLog = await prisma.auditLog.findFirst({
+        where: {
+          organizationId,
+          action: 'member_role_updated',
+          entityId: membership.id,
+        },
+      });
+      expect(auditLog?.actorUserId).toBe(owner.userId);
     });
 
     it('prevents demoting the last owner', async () => {
@@ -227,6 +245,15 @@ describe('Members (e2e)', () => {
       expect(
         (response.body as MembershipBody[]).some((m) => m.id === membership.id),
       ).toBe(false);
+
+      const auditLog = await prisma.auditLog.findFirst({
+        where: {
+          organizationId,
+          action: 'member_removed',
+          entityId: membership.id,
+        },
+      });
+      expect(auditLog?.actorUserId).toBe(owner.userId);
     });
   });
 

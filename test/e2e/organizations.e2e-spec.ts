@@ -65,6 +65,11 @@ describe('Organizations (e2e)', () => {
       const created = list.find((org) => org.id === body.id);
 
       expect(created?.role).toBe('owner');
+
+      const auditLog = await prisma.auditLog.findFirst({
+        where: { organizationId: body.id, action: 'organization_created' },
+      });
+      expect(auditLog?.actorUserId).toBe(owner.userId);
     });
 
     it('rejects unauthenticated requests', async () => {
@@ -140,6 +145,11 @@ describe('Organizations (e2e)', () => {
       expect((response.body as OrganizationBody).name).toBe(
         'Acme Updated Name',
       );
+
+      const auditLog = await prisma.auditLog.findFirst({
+        where: { organizationId, action: 'organization_updated' },
+      });
+      expect(auditLog?.actorUserId).toBe(owner.userId);
     });
 
     it('rejects a non-member from updating the organization', async () => {
@@ -186,6 +196,11 @@ describe('Organizations (e2e)', () => {
 
       const list = listResponse.body as OrganizationBody[];
       expect(list.some((org) => org.id === organizationId)).toBe(false);
+
+      const auditLog = await prisma.auditLog.findFirst({
+        where: { organizationId, action: 'organization_archived' },
+      });
+      expect(auditLog?.actorUserId).toBe(owner.userId);
     });
   });
 });
