@@ -12,6 +12,7 @@ jest.mock('../../../src/modules/prisma/prisma.service', () => ({
 describe('MembersService', () => {
   const organizationId = 'org_123';
   const membershipId = 'membership_123';
+  const actorUserId = 'actor_123';
 
   const user = Object.freeze({
     id: 'user_123',
@@ -32,6 +33,8 @@ describe('MembersService', () => {
     };
   };
 
+  let auditService: { log: jest.Mock };
+
   let service: MembersService;
 
   beforeEach(() => {
@@ -49,7 +52,9 @@ describe('MembersService', () => {
       },
     };
 
-    service = new MembersService(prisma as never);
+    auditService = { log: jest.fn() };
+
+    service = new MembersService(prisma as never, auditService as never);
   });
 
   describe('findAll', () => {
@@ -76,9 +81,13 @@ describe('MembersService', () => {
     it('normalizes the email before lookup', async () => {
       prisma.user.findUnique.mockResolvedValue(user);
       prisma.membership.findUnique.mockResolvedValue(null);
-      prisma.membership.create.mockResolvedValue({ id: membershipId });
+      prisma.membership.create.mockResolvedValue({
+        id: membershipId,
+        role: 'support_agent',
+        user,
+      });
 
-      await service.addMember(organizationId, {
+      await service.addMember(organizationId, actorUserId, {
         email: ' Agent@SupportMind.Dev ',
         role: 'support_agent',
       });
@@ -92,7 +101,7 @@ describe('MembersService', () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.addMember(organizationId, {
+        service.addMember(organizationId, actorUserId, {
           email: user.email,
           role: 'support_agent',
         }),
@@ -106,7 +115,7 @@ describe('MembersService', () => {
       prisma.membership.findUnique.mockResolvedValue({ id: membershipId });
 
       await expect(
-        service.addMember(organizationId, {
+        service.addMember(organizationId, actorUserId, {
           email: user.email,
           role: 'support_agent',
         }),
@@ -115,13 +124,13 @@ describe('MembersService', () => {
       expect(prisma.membership.create).not.toHaveBeenCalled();
     });
 
-    it('creates a membership for a registered, unaffiliated user', async () => {
+    it('creates a membership and logs an audit entry', async () => {
       prisma.user.findUnique.mockResolvedValue(user);
       prisma.membership.findUnique.mockResolvedValue(null);
-      const created = { id: membershipId, role: 'support_agent' };
+      const created = { id: membershipId, role: 'support_agent', user };
       prisma.membership.create.mockResolvedValue(created);
 
-      const result = await service.addMember(organizationId, {
+      const result = await service.addMember(organizationId, actorUserId, {
         email: user.email,
         role: 'support_agent',
       });
@@ -135,6 +144,14 @@ describe('MembersService', () => {
           },
         }),
       );
+      expect(auditService.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId,
+          actorUserId,
+          action: 'member_added',
+          entityId: membershipId,
+        }),
+      );
       expect(result).toBe(created);
     });
   });
@@ -144,7 +161,7 @@ describe('MembersService', () => {
       prisma.membership.findFirst.mockResolvedValueOnce(null);
 
       await expect(
-        service.updateRole(organizationId, membershipId, {
+        service.updateRole(organizationId, membershipId, actorUserId, {
           role: 'admin',
         }),
       ).rejects.toBeInstanceOf(NotFoundException);
@@ -158,7 +175,7 @@ describe('MembersService', () => {
         .mockResolvedValueOnce(null);
 
       await expect(
-        service.updateRole(organizationId, membershipId, {
+        service.updateRole(organizationId, membershipId, actorUserId, {
           role: 'admin',
         }),
       ).rejects.toBeInstanceOf(BadRequestException);
@@ -176,21 +193,33 @@ describe('MembersService', () => {
       expect(prisma.membership.update).not.toHaveBeenCalled();
     });
 
-    it('demotes an owner when another owner exists', async () => {
+    it('demotes an owner when another owner exists and logs an audit entry', async () => {
       prisma.membership.findFirst
         .mockResolvedValueOnce({ id: membershipId, role: 'owner' })
         .mockResolvedValueOnce({ id: 'other_membership' });
       const updated = { id: membershipId, role: 'admin' };
       prisma.membership.update.mockResolvedValue(updated);
 
-      const result = await service.updateRole(organizationId, membershipId, {
-        role: 'admin',
-      });
+      const result = await service.updateRole(
+        organizationId,
+        membershipId,
+        actorUserId,
+        { role: 'admin' },
+      );
 
       expect(prisma.membership.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: membershipId },
           data: { role: 'admin' },
+        }),
+      );
+      expect(auditService.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId,
+          actorUserId,
+          action: 'member_role_updated',
+          entityId: membershipId,
+          metadata: { previousRole: 'owner', newRole: 'admin' },
         }),
       );
       expect(result).toBe(updated);
@@ -204,7 +233,7 @@ describe('MembersService', () => {
       const updated = { id: membershipId, role: 'admin' };
       prisma.membership.update.mockResolvedValue(updated);
 
-      await service.updateRole(organizationId, membershipId, {
+      await service.updateRole(organizationId, membershipId, actorUserId, {
         role: 'admin',
       });
 
@@ -220,7 +249,7 @@ describe('MembersService', () => {
       const updated = { id: membershipId, role: 'owner' };
       prisma.membership.update.mockResolvedValue(updated);
 
-      await service.updateRole(organizationId, membershipId, {
+      await service.updateRole(organizationId, membershipId, actorUserId, {
         role: 'owner',
       });
 
@@ -234,7 +263,7 @@ describe('MembersService', () => {
       prisma.membership.findFirst.mockResolvedValueOnce(null);
 
       await expect(
-        service.removeMember(organizationId, membershipId),
+        service.removeMember(organizationId, membershipId, actorUserId),
       ).rejects.toBeInstanceOf(NotFoundException);
 
       expect(prisma.membership.delete).not.toHaveBeenCalled();
@@ -246,22 +275,35 @@ describe('MembersService', () => {
         .mockResolvedValueOnce(null);
 
       await expect(
-        service.removeMember(organizationId, membershipId),
+        service.removeMember(organizationId, membershipId, actorUserId),
       ).rejects.toBeInstanceOf(BadRequestException);
 
       expect(prisma.membership.delete).not.toHaveBeenCalled();
     });
 
-    it('removes an owner when another owner exists', async () => {
+    it('removes an owner when another owner exists and logs an audit entry', async () => {
       prisma.membership.findFirst
         .mockResolvedValueOnce({ id: membershipId, role: 'owner' })
         .mockResolvedValueOnce({ id: 'other_membership' });
 
-      const result = await service.removeMember(organizationId, membershipId);
+      const result = await service.removeMember(
+        organizationId,
+        membershipId,
+        actorUserId,
+      );
 
       expect(prisma.membership.delete).toHaveBeenCalledWith({
         where: { id: membershipId },
       });
+      expect(auditService.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId,
+          actorUserId,
+          action: 'member_removed',
+          entityId: membershipId,
+          metadata: { previousRole: 'owner' },
+        }),
+      );
       expect(result).toEqual({ success: true });
     });
 
@@ -271,7 +313,11 @@ describe('MembersService', () => {
         role: 'viewer',
       });
 
-      const result = await service.removeMember(organizationId, membershipId);
+      const result = await service.removeMember(
+        organizationId,
+        membershipId,
+        actorUserId,
+      );
 
       expect(prisma.membership.findFirst).toHaveBeenCalledTimes(1);
       expect(prisma.membership.delete).toHaveBeenCalledWith({

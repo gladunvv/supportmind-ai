@@ -38,6 +38,8 @@ describe('OrganizationsService', () => {
     };
   };
 
+  let auditService: { log: jest.Mock };
+
   let service: OrganizationsService;
 
   beforeEach(() => {
@@ -64,7 +66,9 @@ describe('OrganizationsService', () => {
       },
     };
 
-    service = new OrganizationsService(prisma as never);
+    auditService = { log: jest.fn() };
+
+    service = new OrganizationsService(prisma as never, auditService as never);
   });
 
   describe('create', () => {
@@ -95,6 +99,13 @@ describe('OrganizationsService', () => {
           role: 'owner',
         },
       });
+      expect(auditService.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId: organization.id,
+          actorUserId: userId,
+          action: 'organization_created',
+        }),
+      );
       expect(result).toBe(organization);
     });
 
@@ -172,7 +183,7 @@ describe('OrganizationsService', () => {
       prisma.organization.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.update('missing_org', { name: 'New name' }),
+        service.update('missing_org', userId, { name: 'New name' }),
       ).rejects.toBeInstanceOf(NotFoundException);
 
       expect(prisma.organization.update).not.toHaveBeenCalled();
@@ -182,7 +193,7 @@ describe('OrganizationsService', () => {
       prisma.organization.findFirst.mockResolvedValue({ id: organization.id });
       prisma.organization.update.mockResolvedValue(organization);
 
-      const result = await service.update(organization.id, {
+      const result = await service.update(organization.id, userId, {
         name: ' New name ',
         description: ' New description ',
       });
@@ -193,6 +204,13 @@ describe('OrganizationsService', () => {
           data: { name: 'New name', description: 'New description' },
         }),
       );
+      expect(auditService.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId: organization.id,
+          actorUserId: userId,
+          action: 'organization_updated',
+        }),
+      );
       expect(result).toBe(organization);
     });
   });
@@ -201,9 +219,9 @@ describe('OrganizationsService', () => {
     it('throws NotFoundException when the organization does not exist', async () => {
       prisma.organization.findFirst.mockResolvedValue(null);
 
-      await expect(service.archive('missing_org')).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.archive('missing_org', userId),
+      ).rejects.toBeInstanceOf(NotFoundException);
 
       expect(prisma.organization.update).not.toHaveBeenCalled();
     });
@@ -212,12 +230,19 @@ describe('OrganizationsService', () => {
       prisma.organization.findFirst.mockResolvedValue({ id: organization.id });
       prisma.organization.update.mockResolvedValue(organization);
 
-      const result = await service.archive(organization.id);
+      const result = await service.archive(organization.id, userId);
 
       expect(prisma.organization.update).toHaveBeenCalledWith({
         where: { id: organization.id },
         data: { archivedAt: expect.any(Date) as Date },
       });
+      expect(auditService.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId: organization.id,
+          actorUserId: userId,
+          action: 'organization_archived',
+        }),
+      );
       expect(result).toEqual({ success: true });
     });
   });
